@@ -1,0 +1,16 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Claude Code session state (not the CLAUDE.md files — those are the pattern)
+.claude/
+
+# Don't ignore .state/ — the templates are part of the repo
+# Users' actual state will diverge, which is expected
