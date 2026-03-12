@@ -158,7 +158,7 @@ The pattern works with any AI coding tool that supports system prompts and multi
 
 ## Credits
 
-Developed by [Armen Rostamian](https://rmnr.net). Read the full story: **[Your AI Doesn't Know I Exist](https://rmnr.net/blog/your-ai-doesnt-know-i-exist/)**.
+Developed by [Armen Rostamian](https://rmnr.net). Read the full story: **[Stop Talking to Your AI](https://rmnr.net/blog/stop-talking-to-your-ai/)**.
 
 ## License
 
