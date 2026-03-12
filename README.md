@@ -1,6 +1,8 @@
 # Shadow Terminal
 
-**A two-terminal operating pattern for building complex software with AI agents. One agent plans. One agent executes. The human bridges.**
+**A two-terminal operating pattern for building complex software with AI agents. The Strategist plans. The Marshal commands. The human bridges.**
+
+> **Read the full story: [Stop Talking to Your AI](https://rmnr.net/blog/stop-talking-to-your-ai/)** — how this pattern produced a 5,800-line spec, 363 passing tests, and multiple patentable innovations in three days. Zero lines of code written by either orchestration layer.
 
 ---
 
