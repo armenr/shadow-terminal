@@ -2,7 +2,7 @@
 
 **A two-terminal operating pattern for building complex software with AI agents. The Strategist plans. The Marshal commands. The human bridges.**
 
-> **Read the full story: [Stop Talking to Your AI](https://rmnr.net/blog/stop-talking-to-your-ai/)** — how this pattern produced a 5,800-line spec, 363 passing tests, and multiple patentable innovations in three days. Zero lines of code written by either orchestration layer.
+> **Read the full story: [Stop Talking to Your AI](https://rmnr.net/blog/stop-talking-to-your-ai/)** — how this pattern has been running continuously for five weeks, producing 40,000+ lines of Rust, 2,100+ tests, and a system that learns from its own mistakes.
 
 ---
 
@@ -18,10 +18,10 @@ AI coding tools hit a ceiling on complex projects. Context fills up, decisions a
 │   The Strategist    │         │   The Marshal        │
 │                     │  prompt │                     │
 │   Reads state       ├────────►│   Receives prompts  │
-│   Crafts prompts    │         │   Decomposes tasks   │
-│   Maintains strategy│◄────────┤   Dispatches agents  │
-│   Never touches code│ debrief │   Synthesizes results│
-│                     │         │   Maintains state    │
+│   Reads lessons     │         │   Decomposes tasks   │
+│   Crafts prompts    │◄────────┤   Dispatches agents  │
+│   Maintains strategy│ debrief │   Synthesizes results│
+│   Learns from fails │         │   Maintains state    │
 └─────────────────────┘         └─────────────────────┘
                     ▲               ▲
                     │    THE HUMAN  │
@@ -33,9 +33,9 @@ AI coding tools hit a ceiling on complex projects. Context fills up, decisions a
                   The only entity with the full picture.
 ```
 
-- **Terminal 1 — The Strategist** (`meta/`): Reads the marshal's state files, crafts self-contained prompts, maintains strategic notes. Never touches code. Never talks to the marshal directly.
-- **Terminal 2 — The Marshal** (`project/`): Receives prompts from the human, decomposes them into agent missions, dispatches specialists, synthesizes results. Maintains all state on disk. Doesn't know the strategist exists. A marshal commands forces — the specialists are the ones who fight.
-- **The Human**: The bridge. The only one who sees both sides.
+- **Terminal 1 — The Strategist** (`meta/`): Reads the marshal's state files, reads its own lessons learned, crafts self-contained prompts, maintains strategic notes and a master plan. Never touches code. Never talks to the marshal directly.
+- **Terminal 2 — The Marshal** (`project/`): Receives prompts from the human, decomposes them into agent missions with scoped briefs, dispatches specialists, synthesizes results. Maintains all state on disk. Doesn't know the strategist exists. A marshal commands forces — the specialists are the ones who fight.
+- **The Human**: The bridge. The circuit breaker. The only one who sees both sides.
 
 ## Quick Start
 
@@ -48,7 +48,7 @@ cd shadow-terminal
 ```bash
 cd meta/
 claude  # or your AI coding tool of choice
-# Load the strategist with its CLAUDE.md instructions
+# The strategist loads its CLAUDE.md instructions automatically
 # Tell it what you want to build
 ```
 
@@ -56,7 +56,7 @@ claude  # or your AI coding tool of choice
 ```bash
 cd project/
 claude  # or your AI coding tool of choice
-# Load the marshal with its CLAUDE.md instructions
+# The marshal loads its CLAUDE.md instructions automatically
 # Paste the strategist's prompt here
 ```
 
@@ -64,7 +64,7 @@ claude  # or your AI coding tool of choice
 1. Tell the strategist what you want to build
 2. Copy the strategist's code-fenced prompt
 3. Paste it into the marshal terminal
-4. Let the marshal execute
+4. Let the marshal decompose the directive and dispatch agents
 5. Report results back to the strategist
 6. Repeat
 
@@ -76,16 +76,19 @@ That's it. No framework to install. No dependencies. Just two terminals and a pa
 shadow-terminal/
 ├── README.md                  # You are here
 ├── meta/                      # Strategist's workspace
-│   ├── CLAUDE.md              # Strategist system prompt — strategy & prompt crafting
+│   ├── CLAUDE.md              # Strategist config — strategy & prompt crafting
 │   └── steering/              # Strategist's persistent state
-│       ├── meta-notes.md      # Strategic observations (reverse-chronological)
-│       └── prompt-log.md      # Prompt outcomes log (append-only)
+│       ├── meta-notes.md      # Strategic observations (reverse-chronological, cap 15)
+│       ├── prompt-log.md      # Prompt outcomes log (append-only, archive at 15)
+│       ├── lessons.md         # Failure patterns & fixes (append-only, NEVER archived)
+│       └── master-plan.md     # Single-pane work tracker (update in place)
 ├── project/                   # Marshal's workspace
-│   ├── CLAUDE.md              # Marshal system prompt — field command & orchestration
+│   ├── CLAUDE.md              # Marshal config — field command & orchestration
 │   └── .state/                # Marshal's persistent state
 │       ├── ledger.md          # Master progress tracker
 │       ├── decisions.md       # Decision log with rationale
 │       ├── execution-plan.md  # Current plan with phases and deps
+│       ├── open-questions.md  # Unresolved design questions
 │       ├── agents/            # Agent output files
 │       └── phases/            # Phase-level deliverables and outputs
 └── examples/
@@ -94,17 +97,31 @@ shadow-terminal/
 
 ## Key Concepts
 
+### The Immune System (Lessons Learned)
+
+The most valuable artifact the system produces isn't code — it's `lessons.md`. Every failure gets logged as a one-liner: what went wrong and the rule that prevents it from recurring. The strategist reads this file before crafting every prompt. Each lesson prevents a *class* of failures, not just one instance.
+
+The system doesn't get smarter. It gets *tighter*. The same mistake never happens twice.
+
 ### Compaction-Survivable State
 
 Everything important lives on disk, not in context. When (not if) the AI's context window gets compacted or a session restarts, both agents reconstruct their awareness from state files. Context is ephemeral. Disk is durable.
 
 ### Self-Contained Prompts
 
-The marshal has **zero memory** between prompts. Every prompt the strategist crafts must stand alone — purpose, end state, tasks, success criteria. State files bridge sessions, not conversation history.
+The marshal has **zero memory** between prompts. Every prompt the strategist crafts must stand alone — purpose, end state, tasks, dispatch instruction, success criteria. State files bridge sessions, not conversation history.
 
 ### Dispatch Discipline
 
 Every prompt explicitly names **who executes**. The marshal is a field commander — it decomposes and delegates. It never implements inline. The prompt says "dispatch a specialist agent" or "spawn a team of N agents," never "write the code yourself."
+
+### Complexity Budget
+
+Each agent brief stays bounded: ≤5 small tasks, ≤3 moderate, or ≤1 large + 1 small. Exceeding this leads to agents exhausting their context before finishing. When work exceeds the budget, the marshal splits across multiple agents or sequential dispatches.
+
+### File Ownership
+
+When multiple agents run in parallel, each modified file has ONE owning agent. No two agents touch the same file in the same wave. This prevents merge conflicts and makes synthesis predictable.
 
 ### Separation of Concerns
 
@@ -113,6 +130,10 @@ Strategic context (why are we building this? what's the architectural vision? wh
 ### The OODA Loop
 
 The marshal's core operating protocol: **Observe** (read state files, understand current position) → **Orient** (assess the prompt against project state) → **Decide** (plan decomposition and dispatch strategy) → **Act** (dispatch agents, synthesize results, update state). Every prompt triggers a full loop.
+
+### Open Questions
+
+When the marshal encounters an unresolved design question, it logs it to `open-questions.md` with a unique ID and continues with a reasonable default. This is honest acknowledgment that some decisions need more information — silently picking a default without logging it is a failure. The strategist reviews open questions during debriefs.
 
 ### Synthesis Tiers
 
@@ -128,7 +149,7 @@ The strategist specifies **what** and **why**. The marshal decides **how**. "Bui
 
 ### Compaction Recovery Protocol
 
-Both agents have a recovery procedure: read their state files, reconstruct situational awareness, continue. The strategist reads `steering/meta-notes.md` and `steering/prompt-log.md`. The marshal reads `.state/ledger.md` and `.state/decisions.md`. Neither needs conversation history to function.
+Both agents have a recovery procedure: read their state files, reconstruct situational awareness, continue. The strategist reads `steering/meta-notes.md`, `steering/prompt-log.md`, `steering/lessons.md`, and the marshal's ledger. The marshal reads `.state/ledger.md`, `.state/decisions.md`, `.state/execution-plan.md`, and `.state/open-questions.md`. Neither needs conversation history to function.
 
 ## When to Use This
 
@@ -149,10 +170,12 @@ The overhead of two terminals and a dispatch cycle isn't worth it for small stuf
 
 ## Adapting the Pattern
 
-The `CLAUDE.md` files in `meta/` and `project/` are templates. Adapt them to your project:
+The `CLAUDE.md` files in `meta/` and `project/` are starter templates. Adapt them to your project:
 
 - **Strategist**: Adjust the state file paths, add domain-specific strategic concerns, tune the prompt format to your marshal's capabilities.
 - **Marshal**: Define your project's state schema, set dispatch rules for your agent tooling, add domain-specific execution protocols.
+
+Both configs will grow as your system learns. Every lesson adds weight. Every failure that gets logged as a rule makes the next cycle better. That growth is intentional — but review periodically and distill. Keep the rules that are still load-bearing, retire the ones that no longer apply.
 
 The pattern works with any AI coding tool that supports system prompts and multi-agent dispatch. Claude Code, Cursor, Aider, Codex — the terminals don't care.
 
